@@ -1,5 +1,8 @@
-import { Body, Controller, Get, Param, Post, Put, Query } from '@nestjs/common';
+
+import { Body, Controller, Delete, Get, Param, Post, Put, Query, Req, UseGuards } from '@nestjs/common';
 import { UsersService } from './users.service';
+import { User } from './users.entity';
+import { AuthGuard } from 'src/helpers/auth.guard';
 
 @Controller('users')
 export class UsersController {
@@ -10,18 +13,27 @@ export class UsersController {
     return this.usersService.getExample();
   }
   @Post('create')
-  create(@Body() {name, lastname} : {name: string, lastname: string}): {name: string, lastname: string} {
-    return this.usersService.create({name,lastname});
+  create(@Body() user: User): Promise<User> {
+    return this.usersService.create(user); 
   }
 
-
-  @Put('update/:id')
-  update(@Param(){id}: {id: string}): string {
-    return id;
-  }
   @Get('5') 
   findOne(@Query('id') id: string): string {
     return id;
   }
-
+  @Post('login')
+  login(@Body() { email, password }: { email: string; password: string }): Promise<{
+    token: string;
+  }> {
+    return this.usersService.login({ email, password });
+  }
+  @Put('update/profile')
+  @UseGuards(AuthGuard)
+  updateProfile(@Req() request, @Body() user: User): Promise<User> {
+    return this.usersService.updateUserProfile(user, request);
+  }
+  @Delete('delete/:id')
+  async delete(@Param('id') id: string): Promise<void> {
+    return this.usersService.deteteUser(+id);
+  }
 }
