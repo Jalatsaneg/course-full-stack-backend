@@ -49,7 +49,7 @@ export class UsersService {
   }: {
     email: string;
     password: string;
-  }): Promise<{ token: string }> {
+  }): Promise<{ token: string, refreshToken: string }> {
     // Validate data
     if (!email || !password)
       throw new BadRequestException('Email or password must required!.');
@@ -75,7 +75,8 @@ export class UsersService {
     } as User;
 
     const token = this.helpersService.genToken(data);
-    return { token };
+    const refreshToken = this.helpersService.genRefreshToken(data);
+    return { token, refreshToken };
   }
   async updateUserProfile(user: User, request: any): Promise<User> {
     // Validate data input
@@ -109,6 +110,31 @@ export class UsersService {
     if (result.affected === 0){
       throw new BadRequestException('Not found your data!');
     }
+  }
+  async getOwnerProfile(request): Promise<User> {
+    console.log(request.user);
+
+    const userData = await this.userRepository.findOneBy({
+      id: request.user.data.id,
+    })
+    //clare password fild
+    delete userData.password;
+    return userData;
+  }
+  async refreshToken(request: any) : Promise<{token: string, refreshToken: string}>{
+    // console.log("request =>", request.headers["refresh-token"]);
+
+    const userDataFromRefreshToken: any = this.helpersService.verifyAccessRefreshToken(request.headers["refresh-token"])
+
+    const data = userDataFromRefreshToken.data;
+    const newToken = this.helpersService.genToken(data);
+    const newRefreshToken = this.helpersService.genRefreshToken(data);
+
+    // console.log("userDataFromRefreshToken =>", userDataFromRefreshToken);
+
+    //Gen new token and refresh token
+
+    return { token: newToken, refreshToken: newRefreshToken };
   }
 }
 

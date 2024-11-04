@@ -23,7 +23,7 @@ export class UsersController {
   }
   @Post('login')
   login(@Body() { email, password }: { email: string; password: string }): Promise<{
-    token: string;
+    token: string; refreshToken: string;
   }> {
     return this.usersService.login({ email, password });
   }
@@ -35,5 +35,14 @@ export class UsersController {
   @Delete('delete/:id')
   async delete(@Param('id') id: string): Promise<void> {
     return this.usersService.deteteUser(+id);
+  }
+  @Get('profile')
+  @UseGuards(AuthGuard) 
+  ownerProfile(@Req() request): Promise<User> {
+    return this.usersService.getOwnerProfile(request);
+  }
+  @Put('refresh/Token')
+  refreshToken(@Req() request: any): Promise<{token: string, refreshToken: string}> {
+    return this.usersService.refreshToken(request);
   }
 }
